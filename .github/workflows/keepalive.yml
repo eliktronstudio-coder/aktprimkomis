@@ -1,0 +1,25 @@
+name: Supabase Keepalive
+
+on:
+  schedule:
+    - cron: '0 9 */3 * *'  # Every 3 days at 09:00 UTC
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          echo "Pinging Supabase to prevent sleep..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/profiles?select=id&limit=1")
+          echo "Response code: $RESPONSE"
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✓ Supabase is awake"
+          else
+            echo "⚠ Unexpected response: $RESPONSE"
+            exit 1
+          fi
