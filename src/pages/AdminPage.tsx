@@ -6,8 +6,8 @@ import type { Profile } from '../types'
 import { formatDate } from '../lib/dateUtils'
 
 interface StorageStats {
-  r2_used_gb: number
-  r2_limit_gb: number
+  photos_used_mb: number
+  photos_limit_mb: number
   db_used_mb: number
   db_limit_mb: number
 }
@@ -37,23 +37,11 @@ export function AdminPage() {
     try {
       // DB size from Supabase RPC
       const { data: dbData } = await supabase.rpc('get_db_size')
-      // R2 stats from our CF worker endpoint
-      let r2Used = 0
-      try {
-        const r2Res = await fetch('/api/storage-stats', {
-          headers: { Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` }
-        })
-        if (r2Res.ok) {
-          const r2Data = await r2Res.json()
-          r2Used = r2Data.used_gb || 0
-        }
-      } catch {
-        // R2 stats may not be available
-      }
+      const { data: photoBytes } = await supabase.rpc('get_storage_size')
 
       setStorage({
-        r2_used_gb: r2Used,
-        r2_limit_gb: 10,
+        photos_used_mb: photoBytes ? Math.round(Number(photoBytes) / 1024 / 1024) : 0,
+        photos_limit_mb: 1024,
         db_used_mb: dbData ? Math.round(dbData / 1024 / 1024) : 0,
         db_limit_mb: 500,
       })
@@ -103,8 +91,8 @@ export function AdminPage() {
         {storage ? (
           <div className="space-y-4">
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-1">Фото (Cloudflare R2)</p>
-              <StorageBar used={storage.r2_used_gb} limit={storage.r2_limit_gb} unit="ГБ" warnAt={80} />
+              <p className="text-sm font-medium text-gray-700 mb-1">Фото (Supabase Storage)</p>
+              <StorageBar used={storage.photos_used_mb} limit={storage.photos_limit_mb} unit="МБ" warnAt={80} />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-700 mb-1">База данных (Supabase)</p>

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Input, Button, Card } from '../ui'
 import { SignatureCanvas } from './SignatureCanvas'
 import type { CommissionMember, Act } from '../../types'
+import { publicUrl } from '../../lib/storage'
 import { formatDate, toInputDate, todayISO } from '../../lib/dateUtils'
 
 interface CommissionBlockProps {
@@ -14,7 +15,6 @@ interface CommissionBlockProps {
   onUpdateAct: (updates: Partial<Act>) => Promise<void>
 }
 
-const r2 = (key: string) => `${import.meta.env.VITE_R2_PUBLIC_URL}/${key}`
 
 function SignedPerson({ m, title }: { m: CommissionMember | undefined; title: string }) {
   return (
@@ -23,7 +23,7 @@ function SignedPerson({ m, title }: { m: CommissionMember | undefined; title: st
       <p className="text-sm font-medium min-h-5">{m?.full_name || '________________'}</p>
       <p className="text-[11px] text-gray-400">(ФИО)</p>
       {m?.signature_key
-        ? <img src={r2(m.signature_key)} alt="подпись" className="h-10" />
+        ? <img src={publicUrl(m.signature_key)} alt="подпись" className="h-10" />
         : <p className="text-xs text-gray-300 border-b border-gray-300 w-24 h-6">&nbsp;</p>}
       <p className="text-[11px] text-gray-400">(подпись)</p>
     </div>

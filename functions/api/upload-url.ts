@@ -1,5 +1,4 @@
-import { r2Client } from './_r2'
-import { authenticate, contractorHasItemAccess, json, UUID_RE, type Env } from './_auth'
+import { authenticate, contractorHasItemAccess, json, PHOTO_BUCKET, UUID_RE, type Env } from './_auth'
 
 interface Body {
   actId: string
@@ -45,7 +44,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     fileKey = `acts/${actId}/${actItemId}/${type}/${uuid}${isThumb ? '_thumb' : ''}.jpg`
   }
 
-  const uploadUrl = await r2Client(env).presignPut(fileKey, type === 'signature' ? 'image/png' : 'image/jpeg')
+  const { data, error } = await db.storage.from(PHOTO_BUCKET).createSignedUploadUrl(fileKey)
+  if (error || !data) return json({ error: error?.message ?? 'Не удалось создать ссылку загрузки' }, 502)
 
-  return json({ uploadUrl, fileKey })
+  return json({ fileKey, token: data.token })
 }

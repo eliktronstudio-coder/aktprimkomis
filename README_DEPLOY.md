@@ -40,12 +40,12 @@ cd priemochnaya-komissiya
 
 1. В левом меню Supabase выберите **SQL Editor**
 2. Нажмите **New query**
-3. Выполните **по очереди, строго в этом порядке**, три файла из папки `supabase/migrations`:
-   `001_initial.sql` → `002_security_fixes.sql` → `003_act_snapshot.sql`.
+3. Выполните **по очереди, строго в этом порядке**, четыре файла из папки `supabase/migrations`:
+   `001_initial.sql` → `002_security_fixes.sql` → `003_act_snapshot.sql` → `004_storage.sql`.
    Для каждого: откройте файл, скопируйте всё содержимое, вставьте в редактор, нажмите **Run** (Ctrl+Enter)
 4. После каждого файла внизу должно появиться `Success. No rows returned`
 
-> Проще: откройте один файл `supabase/setup_all.sql` (в нём все три миграции подряд), вставьте целиком и нажмите **Run**. Запускать нужно один раз на пустой базе.
+> Проще: откройте один файл `supabase/setup_all.sql` (в нём все четыре миграции подряд), вставьте целиком и нажмите **Run**. Запускать нужно один раз на пустой базе.
 
 ### Настройте вход по email
 
@@ -66,54 +66,12 @@ cd priemochnaya-komissiya
 
 ---
 
-## Шаг 3. Создайте Cloudflare аккаунт и бакет R2
+## Шаг 3. Хранилище фото (Supabase Storage, карта не нужна)
 
-1. Перейдите на [cloudflare.com](https://cloudflare.com) → **Sign Up**
-2. Войдите в Dashboard
-3. В левом меню найдите **R2 Object Storage** → нажмите **Create bucket**
-4. Введите имя бакета: `priemka-photos` (запомните)
-5. Выберите регион **EEUR** (Eastern Europe) или оставьте автоматически
-6. Нажмите **Create bucket**
+Фото хранятся в бакете `photos` самого Supabase: бесплатно 1 ГБ (около 80 актов по 30 фото). Бакет создаёт миграция `004_storage.sql`, вручную ничего настраивать не нужно.
+Если места станет мало, в Supabase можно перейти на платный тариф или перенести фото в другое хранилище.
 
-### Настройте публичный доступ для R2
-
-1. Откройте ваш бакет `priemka-photos`
-2. Перейдите на вкладку **Settings**
-3. В разделе **Public Access** нажмите **Allow Access** → подтвердите
-4. Скопируйте **Public Bucket URL** — это `VITE_R2_PUBLIC_URL` (вид: `https://pub-xxx.r2.dev`)
-
-### Настройте CORS бакета (обязательно!)
-
-Без этого фото не загрузятся с телефона, а в PDF и Excel не попадут фото и подписи.
-
-1. Откройте бакет → **Settings** → **CORS Policy** → **Add CORS policy**
-2. Вставьте и сохраните (вместо адреса укажите адрес вашего сайта на Cloudflare Pages, при желании добавьте свой домен):
-
-```json
-[
-  {
-    "AllowedOrigins": ["https://priemka-xxx.pages.dev"],
-    "AllowedMethods": ["GET", "PUT", "HEAD"],
-    "AllowedHeaders": ["*"],
-    "MaxAgeSeconds": 3600
-  }
-]
-```
-
-> Бакет открыт по публичной ссылке: адреса фото содержат длинные случайные идентификаторы, но любой, кто получит ссылку, сможет открыть снимок. Не публикуйте ссылки на фото в открытых местах.
-
-### Создайте API-ключ R2
-
-1. В главном меню Cloudflare → **R2** → **Manage R2 API Tokens**
-2. Нажмите **Create API token**
-3. Дайте имя: `priemka-upload`
-4. Права: **Object Read & Write**
-5. Укажите бакет: `priemka-photos`
-6. Нажмите **Create API Token**
-7. Скопируйте и сохраните:
-   - **Access Key ID** → `R2_ACCESS_KEY_ID`
-   - **Secret Access Key** → `R2_SECRET_ACCESS_KEY`
-   - **Account ID** (вверху страницы R2) → `R2_ACCOUNT_ID`
+> Бакет публичный: адреса фото содержат длинные случайные идентификаторы, но любой, кто получит ссылку, сможет открыть снимок. Не публикуйте ссылки на фото в открытых местах.
 
 ---
 
@@ -132,11 +90,6 @@ cd priemochnaya-komissiya
 |-----------|---------|
 | `VITE_SUPABASE_URL` | URL вашего Supabase проекта |
 | `VITE_SUPABASE_ANON_KEY` | anon ключ Supabase |
-| `VITE_R2_PUBLIC_URL` | Public URL вашего R2 бакета |
-| `R2_ACCOUNT_ID` | ID аккаунта Cloudflare |
-| `R2_ACCESS_KEY_ID` | Ключ доступа R2 |
-| `R2_SECRET_ACCESS_KEY` | Секретный ключ R2 |
-| `R2_BUCKET_NAME` | `priemka-photos` |
 | `SUPABASE_URL` | URL вашего Supabase проекта |
 | `SUPABASE_SERVICE_ROLE_KEY` | service_role ключ Supabase |
 | `NODE_VERSION` | `20` |
@@ -224,8 +177,7 @@ update profiles set role = 'admin' where email = 'you@example.com';
 |--------|-------|
 | Supabase DB | 500 МБ |
 | Supabase Auth | 50 000 пользователей |
-| Cloudflare R2 фото | 10 ГБ хранилища |
-| Cloudflare R2 исходящий трафик | Бесплатно |
+| Supabase Storage (фото) | 1 ГБ |
 | Cloudflare Pages | Неограниченные деплои |
 
 ---
@@ -236,7 +188,7 @@ update profiles set role = 'admin' where email = 'you@example.com';
 A: Проверьте, что переменные `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` правильно заданы в Cloudflare Pages → Settings → Environment variables
 
 **Q: Фото не загружаются**
-A: Убедитесь, что R2 бакет имеет публичный доступ и все R2_* переменные заданы правильно
+A: Проверьте, что выполнена миграция `004_storage.sql` (в Supabase → Storage должен быть бакет `photos`) и что в Cloudflare Pages заданы `SUPABASE_URL` и `SUPABASE_SERVICE_ROLE_KEY`
 
 **Q: Как обновить шаблон после изменений в Excel?**
 A: Замените `template.xlsx` в корне проекта и снова запустите `npx tsx scripts/import-template.ts`

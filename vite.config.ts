@@ -36,9 +36,9 @@ export default defineConfig({
             options: { cacheName: 'fonts' }
           },
           {
-            urlPattern: /^https:\/\/.*\.r2\.dev\/.*/i,
+            urlPattern: /\/storage\/v1\/object\/public\/photos\//,
             handler: 'CacheFirst',
-            options: { cacheName: 'r2-photos', expiration: { maxEntries: 200, maxAgeSeconds: 86400 } }
+            options: { cacheName: 'photos', expiration: { maxEntries: 200, maxAgeSeconds: 86400 } }
           }
         ]
       }

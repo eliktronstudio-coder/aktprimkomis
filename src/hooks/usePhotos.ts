@@ -3,11 +3,11 @@ import { supabase } from '../lib/supabase'
 import { compressImage } from '../lib/imageUtils'
 import { enqueue, isNetworkError, uploadPhotoNow, PHOTOS_EVENT, type PhotoPayload } from '../lib/offlineQueue'
 import type { Photo } from '../types'
+import { publicUrl } from '../lib/storage'
 
-const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL as string || ''
 
 export function photoUrl(key: string): string {
-  return `${R2_PUBLIC_URL}/${key}`
+  return publicUrl(key)
 }
 
 export function usePhotos(actId: string, actItemId: string) {

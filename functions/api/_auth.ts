@@ -1,10 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 export interface Env {
-  R2_ACCOUNT_ID: string
-  R2_ACCESS_KEY_ID: string
-  R2_SECRET_ACCESS_KEY: string
-  R2_BUCKET_NAME: string
   SUPABASE_URL: string
   SUPABASE_SERVICE_ROLE_KEY: string
 }
@@ -49,3 +45,5 @@ export async function contractorHasItemAccess(
     .maybeSingle()
   return !!data
 }
+
+export const PHOTO_BUCKET = 'photos'

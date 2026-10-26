@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react'
 import { Button } from '../ui'
-import { supabase } from '../../lib/supabase'
+import { requestUploadTarget, uploadToTarget, publicUrl } from '../../lib/storage'
 
 interface SignatureCanvasProps {
   actId: string
@@ -15,7 +15,6 @@ export function SignatureCanvas({ actId, memberId, existingKey, onSaved }: Signa
   const [hasContent, setHasContent] = useState(false)
   const [saving, setSaving] = useState(false)
   const [showCanvas, setShowCanvas] = useState(false)
-  const R2_PUBLIC = import.meta.env.VITE_R2_PUBLIC_URL || ''
 
   const getPos = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect()
@@ -76,26 +75,9 @@ export function SignatureCanvas({ actId, memberId, existingKey, onSaved }: Signa
       const blob = await new Promise<Blob>((res, rej) =>
         canvas.toBlob(b => b ? res(b) : rej(new Error('Canvas failed')), 'image/png')
       )
-      const session = await supabase.auth.getSession()
-      const res = await fetch('/api/upload-url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.data.session?.access_token}`,
-        },
-        body: JSON.stringify({ actId, actItemId: memberId, type: 'signature', isThumb: false, uuid: crypto.randomUUID() }),
-      })
-      if (!res.ok) throw new Error('Failed to get upload URL')
-      const { uploadUrl, fileKey } = await res.json()
-
-      const xhr = new XMLHttpRequest()
-      xhr.open('PUT', uploadUrl)
-      xhr.setRequestHeader('Content-Type', 'image/png')
-      await new Promise<void>((resolve, reject) => {
-        xhr.onload = () => xhr.status < 300 ? resolve() : reject(new Error('Upload failed'))
-        xhr.onerror = () => reject()
-        xhr.send(blob)
-      })
+      const target = await requestUploadTarget({ actId, actItemId: memberId, type: 'signature', uuid: crypto.randomUUID() })
+      await uploadToTarget(target, blob, 'image/png')
+      const fileKey = target.fileKey
 
       onSaved(fileKey)
       setShowCanvas(false)
@@ -111,7 +93,7 @@ export function SignatureCanvas({ actId, memberId, existingKey, onSaved }: Signa
       <div className="flex items-center gap-3">
         {existingKey ? (
           <>
-            <img src={`${R2_PUBLIC}/${existingKey}`} alt="Подпись" className="h-12 border rounded bg-white" />
+            <img src={publicUrl(existingKey)} alt="Подпись" className="h-12 border rounded bg-white" />
             <Button variant="ghost" size="sm" onClick={() => setShowCanvas(true)}>Переподписать</Button>
           </>
         ) : (

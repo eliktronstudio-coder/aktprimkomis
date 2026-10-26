@@ -1,6 +1,6 @@
 import { openDB, type IDBPDatabase } from 'idb'
 import { supabase } from './supabase'
-import { uploadToR2 } from './imageUtils'
+import { requestUploadTarget, uploadToTarget } from './storage'
 import type { OfflineQueueItem } from '../types'
 
 const DB_NAME = 'priemka-offline'
@@ -68,28 +68,17 @@ export function isNetworkError(err: unknown): boolean {
   return /failed to fetch|network|load failed|timeout|abort/i.test(e.message ?? '')
 }
 
-async function authHeader() {
-  const token = (await supabase.auth.getSession()).data.session?.access_token
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
-}
-
-async function getPresigned(p: PhotoPayload, isThumb: boolean) {
-  const res = await fetch('/api/upload-url', {
-    method: 'POST',
-    headers: await authHeader(),
-    body: JSON.stringify({ actId: p.actId, actItemId: p.actItemId, type: p.type, isThumb, uuid: p.uuid }),
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw Object.assign(new Error(body.error || 'Не удалось получить ссылку для загрузки'), { code: String(res.status) })
-  }
-  return res.json() as Promise<{ uploadUrl: string; fileKey: string }>
-}
-
 export async function uploadPhotoNow(p: PhotoPayload, onProgress?: (pct: number) => void): Promise<void> {
-  const [main, thumb] = await Promise.all([getPresigned(p, false), getPresigned(p, true)])
-  await uploadToR2(main.uploadUrl, p.blob, pct => onProgress?.(Math.round(pct * 0.9)))
-  await uploadToR2(thumb.uploadUrl, p.thumbBlob, pct => onProgress?.(90 + Math.round(pct * 0.1)))
+  const req = { actId: p.actId, actItemId: p.actItemId, type: p.type, uuid: p.uuid }
+  const [main, thumb] = await Promise.all([
+    requestUploadTarget({ ...req, isThumb: false }),
+    requestUploadTarget({ ...req, isThumb: true }),
+  ])
+  onProgress?.(10)
+  await uploadToTarget(main, p.blob, 'image/jpeg')
+  onProgress?.(85)
+  await uploadToTarget(thumb, p.thumbBlob, 'image/jpeg')
+  onProgress?.(95)
   const { error } = await supabase.from('photos').insert({
     act_id: p.actId,
     act_item_id: p.actItemId,

@@ -1,5 +1,4 @@
-import { r2Client } from './_r2'
-import { authenticate, contractorHasItemAccess, json, UUID_RE, type Env } from './_auth'
+import { authenticate, contractorHasItemAccess, json, PHOTO_BUCKET, UUID_RE, type Env } from './_auth'
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const auth = await authenticate(request, env)
@@ -24,12 +23,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     if (!allowed) return json({ error: 'Forbidden' }, 403)
   }
 
-  const r2 = r2Client(env)
-  try {
-    await Promise.all([photo.file_key, photo.thumb_key].filter(Boolean).map((k: string) => r2.remove(k)))
-  } catch (e) {
-    return json({ error: (e as Error).message }, 502)
-  }
+  const { error: rmErr } = await db.storage.from(PHOTO_BUCKET).remove([photo.file_key, photo.thumb_key].filter(Boolean))
+  if (rmErr) return json({ error: rmErr.message }, 502)
 
   const { error } = await db.from('photos').delete().eq('id', photoId)
   if (error) return json({ error: error.message }, 500)
