@@ -39,7 +39,7 @@ export function LoginPage() {
   if (user) return <Navigate to="/" replace />
 
   return (
-    <div className="min-h-screen bg-blue-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-blue-50 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg p-6">
         <div className="text-center mb-6">
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -83,6 +83,9 @@ export function LoginPage() {
           {mode === 'login' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
         </button>
       </div>
+      <p className="mt-6 text-center text-xs text-gray-400">
+        © 2026 Мухамедяров Эльнур Тофикович. Все права защищены.
+      </p>
     </div>
   )
 }

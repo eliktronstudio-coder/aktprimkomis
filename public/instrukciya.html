@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Приёмочная комиссия — инструкция</title>
+<meta name="author" content="Мухамедяров Эльнур Тофикович">
+<meta name="copyright" content="© 2026 Мухамедяров Эльнур Тофикович. Все права защищены.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Golos+Text:wght@400;500;600&display=swap&subset=cyrillic" rel="stylesheet">
@@ -96,6 +98,9 @@ h2 { font-family: var(--display); font-weight: 900; font-size: 64px; line-height
 .title-wrap .plate { display: inline-flex; gap: 18px; align-items: center; font-family: var(--display); font-weight: 700; font-size: 24px; letter-spacing: 0.08em; text-transform: uppercase; }
 .title-wrap .plate b { background: var(--safety); color: #111; padding: 10px 18px; }
 .title-wrap h1 { margin-top: 48px; }
+.title-wrap .author { position: absolute; right: 0; top: 10px; font-family: var(--body); font-weight: 500; font-size: 24px; color: var(--muted); }
+/* Copyright line on every inner slide */
+.slide:not(:first-child)::after { content: '© 2026 Мухамедяров Эльнур Тофикович. Все права защищены.'; position: absolute; left: 120px; bottom: 24px; font-family: var(--body); font-size: 18px; color: var(--muted); opacity: 0.8; }
 .title-wrap .lead { margin-top: 40px; max-width: 1200px; font-size: 36px; }
 .agenda { margin-top: auto; border-top: 3px solid var(--safety); padding-top: 28px; }
 .agenda h3 { font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--safety); margin-bottom: 20px; }
@@ -203,6 +208,7 @@ body.editing [contenteditable="true"] { outline: 2px dashed rgba(255, 204, 0, 0.
     <div class="tape t"></div>
     <div class="title-wrap">
       <div class="plate reveal d1"><b>Приёмочная комиссия</b>Инструкция · 2026</div>
+      <div class="author reveal d1">Автор — Мухамедяров Эльнур Тофикович</div>
       <h1 class="reveal d2">Объект принят,<br><span>когда замечаний<br>ноль</span></h1>
       <p class="lead reveal d3">Акт приёмки, замечания с фото и их устранение подрядчиком — с телефона, прямо на объекте.</p>
       <div class="agenda reveal d4">

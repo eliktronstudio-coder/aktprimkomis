@@ -2,6 +2,8 @@
   "name": "priemochnaya-komissiya",
   "version": "1.0.0",
   "private": true,
+  "author": "Мухамедяров Эльнур Тофикович <eliktronstudio@yandex.ru>",
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "dev": "vite",
