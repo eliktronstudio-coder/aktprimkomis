@@ -21,18 +21,22 @@ export interface UploadRequest {
   uuid: string
 }
 
-async function authHeaders() {
+export async function callFunction(name: 'upload-url' | 'delete-photo', body: unknown): Promise<Response> {
   const token = (await supabase.auth.getSession()).data.session?.access_token
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+  return fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  })
 }
 
-// Функция Cloudflare проверяет права и выдаёт одноразовый токен загрузки в Supabase Storage
+// Функция Supabase проверяет права и выдаёт одноразовый токен загрузки в Supabase Storage
 export async function requestUploadTarget(req: UploadRequest): Promise<UploadTarget> {
-  const res = await fetch('/api/upload-url', {
-    method: 'POST',
-    headers: await authHeaders(),
-    body: JSON.stringify(req),
-  })
+  const res = await callFunction('upload-url', req)
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw Object.assign(new Error(body.error || 'Не удалось получить разрешение на загрузку'), { code: String(res.status) })

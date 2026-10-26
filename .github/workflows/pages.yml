@@ -1,0 +1,48 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VITE_BASE: /${{ github.event.repository.name }}/
+      # Публичные значения: anon-ключ и так виден в коде сайта
+      VITE_SUPABASE_URL: https://jpcnpxgliwxldcygjnyl.supabase.co
+      VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwY25weGdsaXd4bGRjeWdqbnlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NzQ2MTAsImV4cCI6MjEwODU1MDYxMH0.xfHH0T_i8nML6TbJJCswAp6k-MVpsTz8b5Kl_BHxJuM
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # GitHub Pages отдаёт 404.html на неизвестные адреса — так работают прямые ссылки на страницы приложения
+      - run: cp dist/index.html dist/404.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

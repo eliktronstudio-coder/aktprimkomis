@@ -52,7 +52,7 @@ cd priemochnaya-komissiya
 1. **Authentication** → **Providers** → **Email** должен быть включён
 2. Для простого старта можно отключить **Confirm email** (иначе новым пользователям придёт письмо с подтверждением;
    на бесплатном тарифе Supabase письма ограничены несколькими штуками в час)
-3. **Authentication** → **URL Configuration** → в **Site URL** впишите адрес вашего сайта на Cloudflare Pages (после шага 4)
+3. **Authentication** → **URL Configuration** → в **Site URL** впишите адрес вашего сайта, например `https://ВАШ_ЛОГИН.github.io/ИМЯ_РЕПОЗИТОРИЯ/` (после шага 4)
 
 ### Получите ключи Supabase
 
@@ -60,7 +60,7 @@ cd priemochnaya-komissiya
 2. Скопируйте и сохраните:
    - **Project URL** → это `VITE_SUPABASE_URL` и `SUPABASE_URL`
    - **anon public** ключ → это `VITE_SUPABASE_ANON_KEY`
-   - **service_role** ключ (нажмите Reveal) → это `SUPABASE_SERVICE_ROLE_KEY`
+   - **service_role** ключ (нажмите Reveal) → это `SUPABASE_SERVICE_ROLE_KEY` (нужен только для импорта шаблона, шаг 5)
 
 > ⚠️ service_role ключ — секретный! Никому не показывайте и не коммитьте в git.
 
@@ -75,19 +75,32 @@ cd priemochnaya-komissiya
 
 ---
 
-## Шаг 4. Настройте Cloudflare Pages
+## Шаг 4. Функции для фото и публикация сайта
 
-1. В Cloudflare Dashboard → **Pages** → **Create a project**
-2. Выберите **Connect to Git** → подключите GitHub аккаунт
-3. Выберите ваш репозиторий с проектом
-4. Настройки сборки:
-   - **Framework preset**: `Vite`
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-5. Прокрутите вниз до **Environment variables** и добавьте (для **Production**; если используете Preview — и для него тоже):
+### Функции Supabase
 
-| Переменная | Значение |
-|-----------|---------|
+Права на загрузку и удаление фото проверяют две функции в папке `supabase/functions` (`upload-url`, `delete-photo`).
+Разверните их один раз (нужен [Supabase CLI](https://supabase.com/docs/guides/cli)):
+
+```bash
+npx supabase login
+npx supabase functions deploy upload-url --project-ref ВАШ_PROJECT_REF
+npx supabase functions deploy delete-photo --project-ref ВАШ_PROJECT_REF
+```
+
+Ключи для функций задавать не нужно: Supabase подставляет `SUPABASE_URL` и `SUPABASE_SERVICE_ROLE_KEY` сам.
+
+### Сайт на GitHub Pages (бесплатно, открывается в России без VPN)
+
+1. В файле `.github/workflows/pages.yml` впишите в `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` свои **Project URL** и **anon public** ключ (они публичные, их можно хранить в репозитории)
+2. В репозитории GitHub → **Settings** → **Pages** → **Source**: выберите **GitHub Actions**
+3. Сделайте любой коммит в ветку `main` (или **Actions** → **Deploy to GitHub Pages** → **Run workflow**)
+4. Через 2–3 минуты сайт будет доступен по адресу `https://ВАШ_ЛОГИН.github.io/ИМЯ_РЕПОЗИТОРИЯ/`
+
+> Адреса `*.pages.dev` (Cloudflare Pages) у части российских операторов не открываются, поэтому основной вариант — GitHub Pages.
+> Сборка на Cloudflare Pages тоже работает: Build command `npm run build`, output `dist`, переменные `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `NODE_VERSION=20`.
+
+-----------|---------|
 | `VITE_SUPABASE_URL` | URL вашего Supabase проекта |
 | `VITE_SUPABASE_ANON_KEY` | anon ключ Supabase |
 | `SUPABASE_URL` | URL вашего Supabase проекта |
@@ -143,7 +156,7 @@ Found 84 sections, 238 items
 
 ## Шаг 7. Создайте первого пользователя-администратора
 
-1. Откройте ваш сайт на Cloudflare Pages
+1. Откройте ваш сайт
 2. Зарегистрируйтесь через форму входа
 3. В Supabase → **SQL Editor** выполните (подставьте свой email):
 ```sql
@@ -178,17 +191,18 @@ update profiles set role = 'admin' where email = 'you@example.com';
 | Supabase DB | 500 МБ |
 | Supabase Auth | 50 000 пользователей |
 | Supabase Storage (фото) | 1 ГБ |
-| Cloudflare Pages | Неограниченные деплои |
+| GitHub Pages | 1 ГБ сайта, 100 ГБ трафика в месяц |
+| Supabase Edge Functions | 500 000 вызовов в месяц |
 
 ---
 
 ## Часто задаваемые вопросы
 
 **Q: Сайт открывается, но пишет ошибку подключения к базе**
-A: Проверьте, что переменные `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` правильно заданы в Cloudflare Pages → Settings → Environment variables
+A: Проверьте, что переменные `VITE_SUPABASE_URL` и `VITE_SUPABASE_ANON_KEY` правильно вписаны в `.github/workflows/pages.yml`
 
 **Q: Фото не загружаются**
-A: Проверьте, что выполнена миграция `004_storage.sql` (в Supabase → Storage должен быть бакет `photos`) и что в Cloudflare Pages заданы `SUPABASE_URL` и `SUPABASE_SERVICE_ROLE_KEY`
+A: Проверьте, что выполнена миграция `004_storage.sql` (в Supabase → Storage должен быть бакет `photos`) и что развёрнуты функции `upload-url` и `delete-photo` (Supabase → Edge Functions)
 
 **Q: Как обновить шаблон после изменений в Excel?**
 A: Замените `template.xlsx` в корне проекта и снова запустите `npx tsx scripts/import-template.ts`

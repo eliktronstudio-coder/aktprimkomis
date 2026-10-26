@@ -1,4 +1,4 @@
-import { authenticate, contractorHasItemAccess, json, PHOTO_BUCKET, UUID_RE, type Env } from './_auth'
+import { authenticate, contractorHasItemAccess, json, PHOTO_BUCKET, serve, UUID_RE } from '../_shared/auth.ts'
 
 interface Body {
   actId: string
@@ -8,8 +8,8 @@ interface Body {
   uuid: string
 }
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
-  const auth = await authenticate(request, env)
+serve(async (request) => {
+  const auth = await authenticate(request)
   if (auth instanceof Response) return auth
   const { db, userId, role } = auth
 
@@ -48,4 +48,4 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   if (error || !data) return json({ error: error?.message ?? 'Не удалось создать ссылку загрузки' }, 502)
 
   return json({ fileKey, token: data.token })
-}
+})

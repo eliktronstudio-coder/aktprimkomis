@@ -108,7 +108,7 @@ export function AdminPage() {
       <Card className="p-4 mb-4">
         <h2 className="font-semibold text-gray-800 mb-2">Управление шаблоном</h2>
         <p className="text-sm text-gray-600 mb-3">Редактирование пунктов чек-листа, зон и подразделов</p>
-        <Button onClick={() => window.location.href = '/template'}>Открыть шаблон</Button>
+        <Button onClick={() => window.location.href = `${import.meta.env.BASE_URL}template`}>Открыть шаблон</Button>
       </Card>
 
       {/* Users */}

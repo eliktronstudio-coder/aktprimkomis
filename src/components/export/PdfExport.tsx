@@ -69,8 +69,8 @@ export function PdfExport({ act, items, photosByItem }: PdfExportProps) {
 
       // Встроенные шрифты jsPDF не содержат кириллицу, поэтому подключаем свои
       const [regular, bold] = await Promise.all([
-        fetchBuffer('/fonts/LiberationSans-Regular.ttf'),
-        fetchBuffer('/fonts/LiberationSans-Bold.ttf'),
+        fetchBuffer(`${import.meta.env.BASE_URL}fonts/LiberationSans-Regular.ttf`),
+        fetchBuffer(`${import.meta.env.BASE_URL}fonts/LiberationSans-Bold.ttf`),
       ])
       doc.addFileToVFS('LiberationSans-Regular.ttf', toBase64(regular))
       doc.addFileToVFS('LiberationSans-Bold.ttf', toBase64(bold))
