@@ -3,9 +3,12 @@ import { PageLayout } from '../components/layout/PageLayout'
 import { useTemplate } from '../hooks/useTemplate'
 import { Button, Input, Select, Badge, Spinner, Card, Alert, Modal } from '../components/ui'
 import { RESPONSIBLE_OPTIONS } from '../types'
+import { supabase } from '../lib/supabase'
+import { ExcelTemplatePicker } from '../components/template/ExcelTemplatePicker'
+import type { ParsedTemplate } from '../lib/excelTemplate'
 
 export function TemplatePage() {
-  const { sections, loading, error, addSection, updateSection, deleteSection, addItem, updateItem, deleteItem, moveSection, moveItem } = useTemplate()
+  const { sections, loading, error, reload, addSection, updateSection, deleteSection, addItem, updateItem, deleteItem, moveSection, moveItem } = useTemplate()
   const run = async (fn: () => Promise<unknown>) => {
     try { await fn() } catch (e) { alert(e instanceof Error ? e.message : 'Не удалось выполнить действие') }
   }
@@ -16,6 +19,24 @@ export function TemplatePage() {
   const [newItem, setNewItem] = useState({ name: '', responsible: 'Ген.подрядчик по СМР', is_kz: false })
   const [newSection, setNewSection] = useState('')
   const [saving, setSaving] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
+  const [importFile, setImportFile] = useState<ParsedTemplate | null>(null)
+  const [importing, setImporting] = useState(false)
+
+  const closeImport = () => { setImportOpen(false); setImportFile(null) }
+  const handleImport = async () => {
+    if (!importFile) return
+    setImporting(true)
+    try {
+      await (await import('../lib/excelTemplate')).replaceTemplate(supabase, importFile)
+      closeImport()
+      await reload()
+    } catch (e) {
+      alert('Не удалось заменить шаблон: ' + (e instanceof Error ? e.message : String(e)))
+    } finally {
+      setImporting(false)
+    }
+  }
 
   if (loading) return <PageLayout title="Шаблон чек-листа" backTo="/"><Spinner className="h-8 w-8 mx-auto mt-12" /></PageLayout>
   if (error) return <PageLayout title="Шаблон чек-листа" backTo="/"><Alert type="error">{error}</Alert></PageLayout>
@@ -26,7 +47,10 @@ export function TemplatePage() {
     <PageLayout title="Шаблон чек-листа" backTo="/">
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm text-gray-500">Всего пунктов: <strong>{totalItems}</strong></p>
-        <Button size="sm" onClick={() => setAddSectionModal({ type: 'zone' })}>+ Зона</Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>📄 Из Excel</Button>
+          <Button size="sm" onClick={() => setAddSectionModal({ type: 'zone' })}>+ Зона</Button>
+        </div>
       </div>
 
       {sections.map(zone => (
@@ -106,6 +130,22 @@ export function TemplatePage() {
           )}
         </Card>
       ))}
+
+      <Modal open={importOpen} onClose={closeImport} title="Загрузить шаблон из Excel">
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            Выберите бланк акта в формате .xlsx (того же вида, что и текущий). Его пункты заменят общий шаблон:
+            по нему будут создаваться новые акты. Уже созданные акты не изменятся.
+          </p>
+          <ExcelTemplatePicker value={importFile} onChange={setImportFile} />
+          {importFile && (
+            <p className="text-sm text-amber-700">Сейчас в шаблоне {totalItems} пунктов, они будут удалены.</p>
+          )}
+          <Button className="w-full" variant="danger" disabled={!importFile} loading={importing} onClick={handleImport}>
+            Заменить шаблон
+          </Button>
+        </div>
+      </Modal>
 
       {/* Add item modal */}
       <Modal open={!!addItemModal} onClose={() => { setAddItemModal(null); setNewItem({ name: '', responsible: 'Ген.подрядчик по СМР', is_kz: false }) }} title={`Новый пункт — ${addItemModal?.sectionName}`}>

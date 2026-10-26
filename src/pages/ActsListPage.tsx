@@ -6,6 +6,8 @@ import { PageLayout } from '../components/layout/PageLayout'
 import { Button, Badge, Input, Select, Spinner, Modal, Card } from '../components/ui'
 import { formatDate, toInputDate } from '../lib/dateUtils'
 import { createAct } from '../hooks/useAct'
+import { ExcelTemplatePicker } from '../components/template/ExcelTemplatePicker'
+import type { ParsedTemplate } from '../lib/excelTemplate'
 import type { Act } from '../types'
 
 interface ActWithCount extends Act {
@@ -27,6 +29,7 @@ export function ActsListPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [newAct, setNewAct] = useState({ branch: '', store_name: '', acceptance_date: '', opening_date: '' })
+  const [excelItems, setExcelItems] = useState<ParsedTemplate | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -75,8 +78,10 @@ export function ActsListPage() {
     if (!newAct.branch || !newAct.store_name || !user) return
     setCreating(true)
     try {
-      const id = await createAct(newAct.branch, newAct.store_name, newAct.acceptance_date || null, newAct.opening_date || null, user.id)
+      const customItems = excelItems ? (await import('../lib/excelTemplate')).actItemsFromParsed(excelItems) : undefined
+      const id = await createAct(newAct.branch, newAct.store_name, newAct.acceptance_date || null, newAct.opening_date || null, user.id, customItems)
       setCreateOpen(false)
+      setExcelItems(null)
       navigate(`/acts/${id}`)
     } catch (e) {
       alert('Ошибка создания акта: ' + (e instanceof Error ? e.message : String(e)))
@@ -210,6 +215,13 @@ export function ActsListPage() {
               onChange={e => setNewAct(d => ({ ...d, opening_date: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Пункты чек-листа</label>
+            <p className="text-xs text-gray-500 mb-2">
+              {excelItems ? 'Пункты возьмутся из выбранного файла.' : 'Без файла пункты возьмутся из общего шаблона. Можно приложить Excel-бланк с другими пунктами.'}
+            </p>
+            <ExcelTemplatePicker value={excelItems} onChange={setExcelItems} />
           </div>
           <Button className="w-full" onClick={handleCreate} loading={creating} disabled={!newAct.branch || !newAct.store_name}>
             Создать акт

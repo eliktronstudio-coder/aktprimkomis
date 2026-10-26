@@ -166,7 +166,8 @@ export async function createAct(
   storeName: string,
   acceptanceDate: string | null,
   openingDate: string | null,
-  createdBy: string
+  createdBy: string,
+  customItems?: CustomActItem[],
 ): Promise<string> {
   const { data: actData, error: actErr } = await supabase
     .from('acts')
@@ -177,52 +178,69 @@ export async function createAct(
 
   const actId = actData.id
 
-  const [{ data: sections }, { data: templateItems }] = await Promise.all([
-    supabase.from('template_sections').select('*'),
-    supabase.from('template_items').select('*'),
-  ])
+  const actItems = customItems
+    ? customItems.map(it => ({ ...it, act_id: actId }))
+    : await itemsFromTemplate(actId)
 
-  if (templateItems && templateItems.length > 0) {
-    type Sec = { id: string; name: string; type: string; parent_id: string | null; sort_order: number }
-    const secById = new Map<string, Sec>((sections as Sec[] | null ?? []).map(x => [x.id, x]))
-    const resolve = (sectionId: string | null) => {
-      const sec = sectionId ? secById.get(sectionId) : undefined
-      const zone = sec?.type === 'subsection' ? (sec.parent_id ? secById.get(sec.parent_id) : undefined) : sec
-      return { zone, sub: sec?.type === 'subsection' ? sec : undefined }
-    }
-    const ordered = [...(templateItems as Array<ActItem & { section_id: string | null }>)].sort((x, y) => {
-      const rx = resolve(x.section_id), ry = resolve(y.section_id)
-      return (rx.zone?.sort_order ?? 0) - (ry.zone?.sort_order ?? 0)
-        || (rx.sub?.sort_order ?? -1) - (ry.sub?.sort_order ?? -1)
-        || x.sort_order - y.sort_order
-    })
-    const actItems = ordered.map((ti, idx) => {
-      const { zone, sub } = resolve(ti.section_id)
-      return {
-        act_id: actId,
-        template_item_id: ti.id,
-        section_id: ti.section_id,
-        zone_name: zone?.name ?? null,
-        subsection_name: sub?.name ?? null,
-        number: idx + 1,
-        name: ti.name,
-        responsible: ti.responsible,
-        is_kz: ti.is_kz,
-        sort_order: idx,
-      }
-    })
-
-    const batchSize = 50
-    for (let i = 0; i < actItems.length; i += batchSize) {
-      const { error: itemErr } = await supabase
-        .from('act_items')
-        .insert(actItems.slice(i, i + batchSize))
-      if (itemErr) throw itemErr
-    }
+  const batchSize = 50
+  for (let i = 0; i < actItems.length; i += batchSize) {
+    const { error: itemErr } = await supabase
+      .from('act_items')
+      .insert(actItems.slice(i, i + batchSize))
+    if (itemErr) throw itemErr
   }
 
   const defaultCommission = DEFAULT_COMMISSION_POSITIONS.map(m => ({ ...m, act_id: actId }))
   await supabase.from('commission_members').insert(defaultCommission)
 
   return actId
+}
+
+export interface CustomActItem {
+  zone_name: string | null
+  subsection_name: string | null
+  number: number
+  name: string
+  responsible: string
+  is_kz: boolean
+  sort_order: number
+}
+
+async function itemsFromTemplate(actId: string) {
+  const [{ data: sections }, { data: templateItems }] = await Promise.all([
+    supabase.from('template_sections').select('*'),
+    supabase.from('template_items').select('*'),
+  ])
+
+  if (!templateItems || templateItems.length === 0) return []
+
+  type Sec = { id: string; name: string; type: string; parent_id: string | null; sort_order: number }
+  const secById = new Map<string, Sec>((sections as Sec[] | null ?? []).map(x => [x.id, x]))
+  const resolve = (sectionId: string | null) => {
+    const sec = sectionId ? secById.get(sectionId) : undefined
+    const zone = sec?.type === 'subsection' ? (sec.parent_id ? secById.get(sec.parent_id) : undefined) : sec
+    return { zone, sub: sec?.type === 'subsection' ? sec : undefined }
+  }
+  const ordered = [...(templateItems as Array<ActItem & { section_id: string | null }>)].sort((x, y) => {
+    const rx = resolve(x.section_id), ry = resolve(y.section_id)
+    return (rx.zone?.sort_order ?? 0) - (ry.zone?.sort_order ?? 0)
+      || (rx.sub?.sort_order ?? -1) - (ry.sub?.sort_order ?? -1)
+      || x.sort_order - y.sort_order
+  })
+  const actItems = ordered.map((ti, idx) => {
+    const { zone, sub } = resolve(ti.section_id)
+    return {
+      act_id: actId,
+      template_item_id: ti.id,
+      section_id: ti.section_id,
+      zone_name: zone?.name ?? null,
+      subsection_name: sub?.name ?? null,
+      number: idx + 1,
+      name: ti.name,
+      responsible: ti.responsible,
+      is_kz: ti.is_kz,
+      sort_order: idx,
+    }
+  })
+  return actItems
 }

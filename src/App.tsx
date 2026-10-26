@@ -22,7 +22,12 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { profile } = useAuthStore()
-  if (profile?.role !== 'admin') return <Navigate to="/" replace />
+  if (!profile) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Spinner className="h-10 w-10" />
+    </div>
+  )
+  if (profile.role !== 'admin') return <Navigate to="/" replace />
   return <>{children}</>
 }
 
