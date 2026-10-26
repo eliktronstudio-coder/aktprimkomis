@@ -23,6 +23,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globIgnores: ['**/instrukciya.html'],
+        navigateFallbackDenylist: [/instrukciya\.html$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/(?!auth\/).*/i,
