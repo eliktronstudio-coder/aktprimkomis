@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useAuthStore } from '../store/authStore'
 import { Input, Button, Alert } from '../components/ui'
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const user = useAuthStore(s => s.user)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mode, setMode] = useState<'login' | 'signup'>('login')
@@ -33,6 +35,8 @@ export function LoginPage() {
       setLoading(false)
     }
   }
+
+  if (user) return <Navigate to="/" replace />
 
   return (
     <div className="min-h-screen bg-blue-50 flex items-center justify-center px-4">
