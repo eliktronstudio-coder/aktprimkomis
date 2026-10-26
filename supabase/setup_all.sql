@@ -1,4 +1,4 @@
--- Единый файл установки: 001 + 002 + 003 + 004. Вставьте целиком в Supabase -> SQL Editor и нажмите Run.
+-- Единый файл установки: 001 + 002 + 003 + 004 + 005. Вставьте целиком в Supabase -> SQL Editor и нажмите Run.
 
 -- ===== 001_initial =====
 -- ============================================================
@@ -486,3 +486,7 @@ begin
   return coalesce((select sum((metadata->>'size')::bigint) from storage.objects where bucket_id = 'photos'), 0);
 end;
 $$;
+
+-- ===== 005_profile_position =====
+-- Должность сотрудника (отдельно от роли доступа admin/engineer/contractor)
+alter table profiles add column if not exists position text;

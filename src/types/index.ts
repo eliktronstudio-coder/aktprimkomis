@@ -5,6 +5,7 @@ export interface Profile {
   email: string | null
   full_name: string | null
   role: UserRole
+  position: string | null
   organization: string | null
   created_at: string
 }
@@ -122,6 +123,24 @@ export const RESPONSIBLE_OPTIONS = [
 ] as const
 
 export type Responsible = typeof RESPONSIBLE_OPTIONS[number]
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  admin: 'Администратор',
+  engineer: 'Инженер',
+  contractor: 'Подрядчик',
+}
+
+export const USER_POSITIONS = [
+  'Главный инженер',
+  'Инженер участка',
+  'Инженер ПБ',
+  'Инженер-энергетик',
+  'Инженер технологического оборудования',
+  'Инженер-строитель',
+  'Начальник отдела запуска',
+  'Руководитель подрядной организации',
+  'Строитель',
+] as const
 
 export interface ActWithStats extends Act {
   total_items: number

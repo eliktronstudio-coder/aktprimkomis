@@ -40,12 +40,12 @@ cd priemochnaya-komissiya
 
 1. В левом меню Supabase выберите **SQL Editor**
 2. Нажмите **New query**
-3. Выполните **по очереди, строго в этом порядке**, четыре файла из папки `supabase/migrations`:
-   `001_initial.sql` → `002_security_fixes.sql` → `003_act_snapshot.sql` → `004_storage.sql`.
+3. Выполните **по очереди, строго в этом порядке**, пять файлов из папки `supabase/migrations`:
+   `001_initial.sql` → `002_security_fixes.sql` → `003_act_snapshot.sql` → `004_storage.sql` → `005_profile_position.sql`.
    Для каждого: откройте файл, скопируйте всё содержимое, вставьте в редактор, нажмите **Run** (Ctrl+Enter)
 4. После каждого файла внизу должно появиться `Success. No rows returned`
 
-> Проще: откройте один файл `supabase/setup_all.sql` (в нём все четыре миграции подряд), вставьте целиком и нажмите **Run**. Запускать нужно один раз на пустой базе.
+> Проще: откройте один файл `supabase/setup_all.sql` (в нём все миграции подряд), вставьте целиком и нажмите **Run**. Запускать нужно один раз на пустой базе.
 
 ### Настройте вход по email
 

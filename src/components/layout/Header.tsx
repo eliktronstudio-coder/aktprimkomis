@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
+import { ROLE_LABELS } from '../../types'
 import { useOfflineQueue } from '../../hooks/useOfflineQueue'
 
 interface HeaderProps {
@@ -46,11 +47,9 @@ export function Header({ title = 'Приёмочная комиссия', backTo
             </button>
             <div className="absolute right-0 top-full mt-1 w-48 bg-white text-gray-800 rounded-xl shadow-lg border hidden group-hover:block">
               <div className="px-3 py-2 border-b">
-                <p className="text-xs text-gray-500">{profile.email}</p>
-                <p className="text-xs font-medium capitalize">{
-                  profile.role === 'admin' ? 'Администратор' :
-                  profile.role === 'engineer' ? 'Инженер' : 'Подрядчик'
-                }</p>
+                <p className="text-xs text-gray-500 break-all">{profile.email}</p>
+                {profile.position && <p className="text-xs text-gray-700">{profile.position}</p>}
+                <p className="text-xs font-medium">{ROLE_LABELS[profile.role]}</p>
               </div>
               {profile.role === 'admin' && (
                 <Link to="/admin" className="block px-3 py-2 text-sm hover:bg-gray-50">Администрирование</Link>
