@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Button } from '../ui'
 import type { Act, ActItem, CommissionMember, SummaryRow, Photo } from '../../types'
 import { formatDate } from '../../lib/dateUtils'
+import { APP_CREATOR, COPYRIGHT_HOLDER, COPYRIGHT_TEXT } from '../../lib/copyright'
 import { photoUrl } from '../../hooks/usePhotos'
 
 interface ExcelExportProps {
@@ -48,6 +49,13 @@ export function ExcelExport({ act, items, commission, summaryRows, photosByItem 
     try {
       const ExcelJS = (await import('exceljs')).default
       const wb = new ExcelJS.Workbook()
+      wb.creator = COPYRIGHT_HOLDER
+      wb.lastModifiedBy = COPYRIGHT_HOLDER
+      wb.title = `Акт приёмки — ${act.store_name}`
+      wb.subject = `Акт приёмки, ${act.branch}`
+      wb.company = APP_CREATOR
+      wb.description = COPYRIGHT_TEXT
+      wb.created = new Date()
       const ws = wb.addWorksheet('Акт', { views: [{ showGridLines: false }] })
       ws.columns = [
         { width: 2 }, { width: 7 }, { width: 58 }, { width: 14 }, { width: 16 }, { width: 24 },

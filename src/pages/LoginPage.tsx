@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
+import { COPYRIGHT_TEXT } from '../lib/copyright'
 import { Input, Button, Alert } from '../components/ui'
 
 export function LoginPage() {
@@ -84,7 +85,7 @@ export function LoginPage() {
         </button>
       </div>
       <p className="mt-6 text-center text-xs text-gray-400">
-        © 2026 Мухамедяров Эльнур Тофикович. Все права защищены.
+        {COPYRIGHT_TEXT}
       </p>
     </div>
   )

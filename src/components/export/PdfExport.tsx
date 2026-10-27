@@ -3,6 +3,7 @@ import { Button, Select } from '../ui'
 import type { Act, ActItem, Photo } from '../../types'
 import { RESPONSIBLE_OPTIONS } from '../../types'
 import { formatDate, isOverdue } from '../../lib/dateUtils'
+import { APP_CREATOR, COPYRIGHT_HOLDER, COPYRIGHT_TEXT } from '../../lib/copyright'
 import { photoUrl } from '../../hooks/usePhotos'
 
 interface PdfExportProps {
@@ -66,6 +67,13 @@ export function PdfExport({ act, items, photosByItem }: PdfExportProps) {
     try {
       const jsPDF = (await import('jspdf')).default
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      doc.setProperties({
+        title: `Замечания — ${act.store_name}`,
+        subject: `Отчёт по замечаниям приёмки, ${act.branch}`,
+        author: COPYRIGHT_HOLDER,
+        creator: APP_CREATOR,
+        keywords: `приёмочная комиссия, ${COPYRIGHT_TEXT}`,
+      })
 
       // Встроенные шрифты jsPDF не содержат кириллицу, поэтому подключаем свои
       const [regular, bold] = await Promise.all([
@@ -184,6 +192,7 @@ export function PdfExport({ act, items, photosByItem }: PdfExportProps) {
         doc.setPage(i)
         doc.setFont('LS', 'normal'); doc.setFontSize(8); doc.setTextColor(140, 140, 140)
         doc.text(`${i} / ${pages}`, PAGE_W - MARGIN, PAGE_H - 7, { align: 'right' })
+        doc.text(`«Приёмочная комиссия» ${COPYRIGHT_TEXT}`, MARGIN, PAGE_H - 7)
       }
 
       const suffix = filterResp !== 'all' ? `_${filterResp}` : ''
